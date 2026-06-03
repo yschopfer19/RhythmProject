@@ -15,7 +15,6 @@ Chart ChartLoader::createTestChart()
     chart.addNote({2.0f, 0, 0.0f}); // Lane 0 bei 2s
     chart.addNote({2.5f, 2, 0.0f}); // Lane 2 bei 2.5s
     chart.addNote({3.0f, 3, 0.0f}); // Lane 3 bei 3s
-    chart.addNote({3.5f, 1, 0.0f}); // Lane 1 bei 3.5s
 
     // Zweite Sequenz: 4.0s - 5.0s
 

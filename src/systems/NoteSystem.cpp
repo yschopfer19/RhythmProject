@@ -36,6 +36,7 @@ void NoteSystem::update(float songtime, const array<float, 4> &hitY)
                 note->getPosition().y > hitY[lane] + 30)
             {
                 note->setState(NoteState::MISS);
+                pendingMisses++;
             }
         }
     }
@@ -57,4 +58,11 @@ void NoteSystem::draw(sf::RenderWindow &window)
 vector<unique_ptr<Note>> &NoteSystem::getNotes()
 {
     return notes;
+}
+
+int NoteSystem::popMisses()
+{
+    int result = pendingMisses;
+    pendingMisses = 0;
+    return result;
 }

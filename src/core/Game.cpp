@@ -2,12 +2,14 @@
 #include "../charts/ChartLoader.h"
 #include <array>
 #include "GameConfig.h"
+#include "MainMenu.h"
 
 using namespace std;
 using namespace sf;
 
 Game::Game()
     : window(sf::VideoMode({800, 600}), "Rhythm Game"),
+      mainMenu(window),
       lanes({Lane(50.0f, 50.0f, 130.0f, 500.0f, Color::Blue, Color::White),
              Lane(220.0f, 50.0f, 130.0f, 500.0f, Color::Blue, Color::White),
              Lane(390.0f, 50.0f, 130.0f, 500.0f, Color::Blue, Color::White),
@@ -15,16 +17,17 @@ Game::Game()
 {
     window.setVerticalSyncEnabled(true);
     window.setKeyRepeatEnabled(false);
+    if (!hudFont.openFromFile("C:/Users/yanni/Desktop/RhythmProject/assets/Arimo-VariableFont_wght.ttf"))
+        cout << "Fehler beim Laden der HUD Schrift!" << endl;
 
-    Chart testChart = ChartLoader::createTestChart();
-    loadChart(testChart);
+    scoreText = make_unique<sf::Text>(hudFont, "", 24);
+    comboText = make_unique<sf::Text>(hudFont, "", 24);
+    judgementText = make_unique<sf::Text>(hudFont, "", 32);
 
-    if (!audioSystem.load(testChart.musicPath))
-    {
-        cout << "Fehler beim Laden der Musik!" << endl;
-    }
+    scoreText->setPosition({10.f, 10.f});
+    comboText->setPosition({10.f, 40.f});
+    judgementText->setPosition({300.f, 400.f});
 
-    audioSystem.play();
 }
 
 void Game::loadChart(const Chart &chart)
@@ -87,13 +90,32 @@ void Game::processEvents()
         if (event->is<Event::Closed>())
             window.close();
 
-        inputSystem.handleEvent(*event);
+        if (gameState == GameState::MENU)
+        {
+            mainMenu.handleEvent(*event);
+            if (mainMenu.isPlayPressed())
+            {
+                Chart testChart = ChartLoader::createTestChart();
+                loadChart(testChart);
+                if (!audioSystem.load(testChart.musicPath))
+                    cout << "Fehler beim Laden der Musik!" << endl;
+                audioSystem.play();
+                gameState = GameState::PLAYING;
+            }
+        }
+        else
+        {
+            inputSystem.handleEvent(*event);
+        }
+
         event = window.pollEvent();
     }
 }
 
 void Game::update()
 {
+    if (gameState != GameState::PLAYING) return;
+    
     Seconds songTime = audioSystem.getSongTime();
 
     array<float, 4> hitY;
@@ -101,6 +123,11 @@ void Game::update()
         hitY[i] = lanes[i].getHitzonePosition().y;
 
     noteSystem.update(songTime.value, hitY);
+
+    int missed = noteSystem.popMisses();
+
+    for (int i = 0; i < missed; i++)
+        scoreSystem.addJudgement(Judgement::MISS);
 
     auto inputs = inputSystem.pollInputs();
 
@@ -131,12 +158,29 @@ void Game::render()
 {
     window.clear(Color::Black);
 
-    for (const auto &lane : lanes)
+    if (gameState == GameState::MENU)
     {
-        lane.draw(window);
+        mainMenu.draw();
+    }
+    else if (gameState == GameState::PLAYING)
+    {
+        for (const auto &lane : lanes)
+            lane.draw(window);
+
+        noteSystem.draw(window);
+
+        scoreText->setString("Score: " + to_string(scoreSystem.getScore()));
+        comboText->setString("Combo: " + to_string(scoreSystem.getCombo()));
+
+        window.draw(*scoreText);
+        window.draw(*comboText);
     }
 
-    noteSystem.draw(window);
 
     window.display();
 }
+
+/*GameState Game::getState()
+{
+    return this->gameState;
+}*/

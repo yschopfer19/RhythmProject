@@ -11,6 +11,14 @@
 #include "Lane.h"
 #include "Types.h"
 #include "HoldNote.h"
+#include "MainMenu.h"
+
+enum class GameState
+{
+    MENU,
+    PLAYING,
+    RESULT
+};
 
 class Game
 {
@@ -23,6 +31,7 @@ private:
     void update();
     void render();
     void loadChart(const Chart &chart);
+    GameState getState();
 
 private:
     sf::RenderWindow window;
@@ -36,4 +45,12 @@ private:
     JudgementSystem judgementSystem;
     ScoreSystem scoreSystem;
     AudioSystem audioSystem;
+
+    MainMenu mainMenu;
+    GameState gameState = GameState::MENU;
+
+    sf::Font hudFont;
+    std::unique_ptr<sf::Text> scoreText;
+    std::unique_ptr<sf::Text> comboText;
+    std::unique_ptr<sf::Text> judgementText;
 };
