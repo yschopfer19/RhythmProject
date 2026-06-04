@@ -11,6 +11,11 @@ void AudioSystem::play()
     music.play();
 }
 
+void AudioSystem::stop()
+{
+    music.stop();
+}
+
 Seconds AudioSystem::getSongTime() const
 {
     return Seconds{music.getPlayingOffset().asSeconds()};

@@ -20,7 +20,7 @@ void ScoreSystem::addJudgement(Judgement judgement)
         goodCount++;
         break;
     case Judgement::MISS:
-        combo = 0;  // Combo reset!
+        combo = 0; // Combo reset!
         missCount++;
         break;
     case Judgement::HOLD:
@@ -33,8 +33,8 @@ void ScoreSystem::addJudgement(Judgement judgement)
     if (combo > maxCombo)
         maxCombo = combo;
 
-    cout << JudgementSystem::judgementToString(judgement) 
-         << " | Score: " << score 
+    cout << JudgementSystem::judgementToString(judgement)
+         << " | Score: " << score
          << " | maxCombo: " << maxCombo
          << " | Combo: " << combo << endl;
 }
@@ -61,5 +61,5 @@ void ScoreSystem::reset()
     this->score = 0;
     this->perfectCount = 0;
     this->goodCount = 0;
-    this->missCount = 0; 
+    this->missCount = 0;
 }

@@ -28,15 +28,20 @@ Game::Game()
     comboText->setPosition({10.f, 40.f});
     judgementText->setPosition({300.f, 400.f});
 
+    resultScreen = make_unique<ResultScreen>(window);
 }
 
 void Game::loadChart(const Chart &chart)
 {
     const auto &notes = chart.getNotes();
+    lastNoteTime = 0.0f;
 
     for (const auto &chartNote : notes)
     {
         float hitTime = chartNote.time;
+        float endTime = hitTime + chartNote.duration;
+        lastNoteTime = max(lastNoteTime, endTime);
+
         float spawnTime = max(0.0f, hitTime - GameConfig::NOTE_TRAVEL_TIME);
         if (chartNote.duration > 0.0f)
         {
@@ -92,6 +97,7 @@ void Game::processEvents()
 
         if (gameState == GameState::MENU)
         {
+            mainMenu.update();
             mainMenu.handleEvent(*event);
             if (mainMenu.isPlayPressed())
             {
@@ -101,6 +107,19 @@ void Game::processEvents()
                     cout << "Fehler beim Laden der Musik!" << endl;
                 audioSystem.play();
                 gameState = GameState::PLAYING;
+            }
+        }
+        else if (gameState == GameState::RESULT)
+        {
+            resultScreen->handleEvent(*event);
+            if (resultScreen->isMenuPressed())
+            {
+                gameState = GameState::MENU;
+                resultScreen->reset();
+                scoreSystem.reset();
+                noteSystem.reset();
+                audioSystem.stop();
+                mainMenu.reset();
             }
         }
         else
@@ -114,43 +133,56 @@ void Game::processEvents()
 
 void Game::update()
 {
-    if (gameState != GameState::PLAYING) return;
-    
-    Seconds songTime = audioSystem.getSongTime();
-
-    array<float, 4> hitY;
-    for (int i = 0; i < 4; i++)
-        hitY[i] = lanes[i].getHitzonePosition().y;
-
-    noteSystem.update(songTime.value, hitY);
-
-    int missed = noteSystem.popMisses();
-
-    for (int i = 0; i < missed; i++)
-        scoreSystem.addJudgement(Judgement::MISS);
-
-    auto inputs = inputSystem.pollInputs();
-
-    for (const auto &input : inputs)
+    if (gameState == GameState::PLAYING)
     {
-        Judgement judgement;
-        if (input.action == InputAction::Press)
+        Seconds songTime = audioSystem.getSongTime();
+
+        // Check if it's time to transition to result screen
+        if (songTime.value >= lastNoteTime + 2.0f)
         {
-            judgement = judgementSystem.evaluatePress(
-                input.lane,
-                hitY[input.lane.value],
-                noteSystem.getNotes(),
-                songTime.value);
-        }
-        else
-        {
-            judgement = judgementSystem.evaluateRelease(
-                input.lane,
-                hitY[input.lane.value],
-                noteSystem.getNotes());
+            gameState = GameState::RESULT;
+            resultScreen->setResults(scoreSystem.getScore(), scoreSystem.getMaxCombo());
+            return;
         }
 
-        scoreSystem.addJudgement(judgement);
+        array<float, 4> hitY;
+        for (int i = 0; i < 4; i++)
+            hitY[i] = lanes[i].getHitzonePosition().y;
+
+        noteSystem.update(songTime.value, hitY);
+
+        int missed = noteSystem.popMisses();
+
+        for (int i = 0; i < missed; i++)
+            scoreSystem.addJudgement(Judgement::MISS);
+
+        auto inputs = inputSystem.pollInputs();
+
+        for (const auto &input : inputs)
+        {
+            Judgement judgement;
+            if (input.action == InputAction::Press)
+            {
+                judgement = judgementSystem.evaluatePress(
+                    input.lane,
+                    hitY[input.lane.value],
+                    noteSystem.getNotes(),
+                    songTime.value);
+            }
+            else
+            {
+                judgement = judgementSystem.evaluateRelease(
+                    input.lane,
+                    hitY[input.lane.value],
+                    noteSystem.getNotes());
+            }
+
+            scoreSystem.addJudgement(judgement);
+        }
+    }
+    else if (gameState == GameState::RESULT)
+    {
+        resultScreen->update();
     }
 }
 
@@ -175,7 +207,10 @@ void Game::render()
         window.draw(*scoreText);
         window.draw(*comboText);
     }
-
+    else if (gameState == GameState::RESULT)
+    {
+        resultScreen->draw();
+    }
 
     window.display();
 }

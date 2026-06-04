@@ -2,27 +2,30 @@
 
 #include <SFML/Graphics.hpp>
 
-using namespace std; 
+using namespace std;
 using namespace sf;
 
 class MainMenu
 {
-    public: 
-        MainMenu(RenderWindow& window);
+public:
+    MainMenu(RenderWindow &window);
 
-        void handleEvent(const sf::Event& event);
+    void handleEvent(const sf::Event &event);
 
-        void update();
-        void draw();
+    void update();
+    void draw();
 
-        bool isPlayPressed() const;
+    bool isPlayPressed() const;
+    void reset();
 
-    private:
-        RenderWindow& m_window;
+private:
+    RenderWindow &m_window;
 
-        RectangleShape m_playButton;
-        std::unique_ptr<Text> m_playText;
-        Font m_font;
+    RectangleShape m_playButton;
+    unique_ptr<Text> m_playText;
+    Font m_font;
 
-        bool m_playPressed = false;
+    bool m_playPressed = false;
+
+    bool m_buttonHovered = false;
 };

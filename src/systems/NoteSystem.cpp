@@ -24,15 +24,15 @@ void NoteSystem::update(float songtime, const array<float, 4> &hitY)
             note->setState(NoteState::ACTIVE);
         }
 
-        if (note->getState() == NoteState::ACTIVE || 
-            note->getState() == NoteState::HELD || 
+        if (note->getState() == NoteState::ACTIVE ||
+            note->getState() == NoteState::HELD ||
             note->getState() == NoteState::RELEASED)
         {
             note->update(songtime);
 
             int lane = note->getlaneIndex();
 
-            if (note->getState() == NoteState::ACTIVE && 
+            if (note->getState() == NoteState::ACTIVE &&
                 note->getPosition().y > hitY[lane] + 30)
             {
                 note->setState(NoteState::MISS);
@@ -65,4 +65,10 @@ int NoteSystem::popMisses()
     int result = pendingMisses;
     pendingMisses = 0;
     return result;
+}
+
+void NoteSystem::reset()
+{
+    notes.clear();
+    pendingMisses = 0;
 }

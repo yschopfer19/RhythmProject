@@ -11,6 +11,8 @@ public:
 
     void play();
 
+    void stop();
+
     Seconds getSongTime() const;
 
 private:

@@ -12,6 +12,7 @@
 #include "Types.h"
 #include "HoldNote.h"
 #include "MainMenu.h"
+#include "../ui/ResultScreen.h"
 
 enum class GameState
 {
@@ -36,9 +37,9 @@ private:
 private:
     sf::RenderWindow window;
 
-    float elapsedTime = 0.0f; 
+    float elapsedTime = 0.0f;
 
-    std::array<Lane, 4> lanes;
+    array<Lane, 4> lanes;
 
     InputSystem inputSystem;
     NoteSystem noteSystem;
@@ -47,10 +48,14 @@ private:
     AudioSystem audioSystem;
 
     MainMenu mainMenu;
+    unique_ptr<ResultScreen> resultScreen;
     GameState gameState = GameState::MENU;
 
+    float lastNoteTime = 0.0f;
+    float resultScreenStartTime = 0.0f;
+
     sf::Font hudFont;
-    std::unique_ptr<sf::Text> scoreText;
-    std::unique_ptr<sf::Text> comboText;
-    std::unique_ptr<sf::Text> judgementText;
+    unique_ptr<sf::Text> scoreText;
+    unique_ptr<sf::Text> comboText;
+    unique_ptr<sf::Text> judgementText;
 };

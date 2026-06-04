@@ -23,7 +23,9 @@ public:
     vector<unique_ptr<Note>> &getNotes();
 
     int popMisses();
-    
+
+    void reset();
+
 private:
     vector<unique_ptr<Note>> notes;
     int pendingMisses = 0;
