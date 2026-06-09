@@ -19,13 +19,18 @@ public:
     void reset();
 
 private:
+    void drawBackground();
+    void drawTitle();
+
     RenderWindow &m_window;
 
     RectangleShape m_playButton;
     unique_ptr<Text> m_playText;
+    unique_ptr<Text> m_titleText;
+    unique_ptr<Text> m_subtitleText;
     Font m_font;
 
     bool m_playPressed = false;
-
     bool m_buttonHovered = false;
+    float m_animationTime = 0.f;
 };

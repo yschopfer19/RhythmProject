@@ -58,4 +58,6 @@ private:
     unique_ptr<sf::Text> scoreText;
     unique_ptr<sf::Text> comboText;
     unique_ptr<sf::Text> judgementText;
+
+    float judgementTimer = 0.0f;
 };

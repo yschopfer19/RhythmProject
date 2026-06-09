@@ -1,5 +1,6 @@
 #include "Game.h"
 #include "../charts/ChartLoader.h"
+#include "../ui/UIHelper.h"
 #include <array>
 #include "GameConfig.h"
 #include "MainMenu.h"
@@ -178,6 +179,20 @@ void Game::update()
             }
 
             scoreSystem.addJudgement(judgement);
+            // Judgement Text setzen
+            if (judgement != Judgement::RELEASE &&
+                judgement != Judgement::HOLD &&
+                judgement != Judgement::NONE)
+            {
+                judgementText->setString(JudgementSystem::judgementToString(judgement));
+                judgementTimer = 0.3f;
+            }
+        }
+        if (judgementTimer > 0.0f)
+        {
+            judgementTimer -= 0.016f; // ungefähr ein Frame
+            if (judgementTimer <= 0.0f)
+                judgementText->setString("");
         }
     }
     else if (gameState == GameState::RESULT)
@@ -196,16 +211,56 @@ void Game::render()
     }
     else if (gameState == GameState::PLAYING)
     {
-        for (const auto &lane : lanes)
-            lane.draw(window);
+        // Draw background gradient
+        UIHelper::drawGradientRect(
+            window,
+            {0.f, 0.f},
+            {800.f, 600.f},
+            Color(15, 25, 50),   // Top Left
+            Color(20, 35, 70),   // Top Right
+            Color(25, 40, 80),   // Bottom Left
+            Color(35, 50, 100)); // Bottom Right
 
-        noteSystem.draw(window);
+        // Draw decorative top bar
+        RectangleShape topBar({800.f, 40.f});
+        topBar.setPosition({0.f, 0.f});
+        topBar.setFillColor(Color(10, 15, 40, 180));
+        topBar.setOutlineColor(Color(100, 150, 200, 150));
+        topBar.setOutlineThickness(2.f);
+        window.draw(topBar);
 
+        // Draw HUD on top bar
         scoreText->setString("Score: " + to_string(scoreSystem.getScore()));
         comboText->setString("Combo: " + to_string(scoreSystem.getCombo()));
 
+        scoreText->setPosition({15.f, 8.f});
+        scoreText->setFillColor(Color(100, 200, 255));
+        scoreText->setOutlineThickness(1.f);
+        scoreText->setOutlineColor(Color(50, 100, 150));
+        scoreText->setCharacterSize(18);
+
+        comboText->setPosition({650.f, 8.f});
+        comboText->setFillColor(Color(255, 200, 100));
+        comboText->setOutlineThickness(1.f);
+        comboText->setOutlineColor(Color(200, 100, 50));
+        comboText->setCharacterSize(18);
+
         window.draw(*scoreText);
         window.draw(*comboText);
+
+        // Draw lanes
+        for (const auto &lane : lanes)
+            lane.draw(window);
+
+        // Draw notes
+        noteSystem.draw(window);
+
+        // Draw judgement text if not empty
+        if (!judgementText->getString().isEmpty())
+        {
+            judgementText->setFillColor(Color(100, 200, 255));
+            window.draw(*judgementText);
+        }
     }
     else if (gameState == GameState::RESULT)
     {

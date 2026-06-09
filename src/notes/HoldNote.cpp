@@ -6,11 +6,14 @@
 using namespace std;
 using namespace sf;
 
-
 HoldNote::HoldNote(float x, float y, Color color, int speed, int lane_Index, float spawn_time, float note_length)
     : Note(x, y, color, speed, lane_Index, spawn_time), note_length(note_length), hold_end_y(0.0f)
 {
     shape.setSize({130, note_length});
+    // Hold notes have different colors
+    shape.setFillColor(Color(255, 150, 100));
+    shape.setOutlineThickness(2.f);
+    shape.setOutlineColor(Color(255, 200, 150));
 }
 
 void HoldNote::update(float songtime)
