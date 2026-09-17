@@ -1,6 +1,6 @@
 #include "Game.h"
-#include "../charts/ChartLoader.h"
-#include "../ui/UIHelper.h"
+#include "ChartLoader.h"
+#include "UIHelper.h"
 #include <array>
 #include "GameConfig.h"
 #include "MainMenu.h"
@@ -154,8 +154,18 @@ void Game::update()
 
         int missed = noteSystem.popMisses();
 
-        for (int i = 0; i < missed; i++)
-            scoreSystem.addJudgement(Judgement::MISS);
+        if (missed > 0)
+        {
+            for (int i = 0; i < missed; i++)
+            {
+                scoreSystem.addJudgement(Judgement::MISS);
+            }
+
+            judgementText->setString(
+                JudgementSystem::judgementToString(Judgement::MISS));
+
+            judgementTimer = 0.3f;
+        }
 
         auto inputs = inputSystem.pollInputs();
 
