@@ -1,5 +1,6 @@
 #include "UIHelper.h"
-#include <vector>
+
+#include <SFML/Graphics.hpp>
 
 using namespace sf;
 
@@ -12,41 +13,33 @@ void UIHelper::drawGradientRect(
     Color colorBottomLeft,
     Color colorBottomRight)
 {
-    // Create a 2x2 gradient texture
-    std::vector<Color> gradientData(4);
-    gradientData[0] = colorTopLeft;
-    gradientData[1] = colorTopRight;
-    gradientData[2] = colorBottomLeft;
-    gradientData[3] = colorBottomRight;
+    // Echter interpolierter Farbverlauf statt vier Rechtecken
+    VertexArray vertices(PrimitiveType::Triangles, 6);
 
-    // Draw as 4 triangles
-    ConvexShape quad(4);
-    quad.setPoint(0, Vector2f(0, 0));
-    quad.setPoint(1, Vector2f(size.x, 0));
-    quad.setPoint(2, Vector2f(size.x, size.y));
-    quad.setPoint(3, Vector2f(0, size.y));
-    quad.setPosition(position);
+    const Vector2f topLeft = position;
+    const Vector2f topRight = {
+        position.x + size.x,
+        position.y};
 
-    // Draw with color interpolation using RectangleShape with colors
-    RectangleShape topLeft({size.x / 2, size.y / 2});
-    topLeft.setPosition(position);
-    topLeft.setFillColor(colorTopLeft);
-    window.draw(topLeft);
+    const Vector2f bottomLeft = {
+        position.x,
+        position.y + size.y};
 
-    RectangleShape topRight({size.x / 2, size.y / 2});
-    topRight.setPosition({position.x + size.x / 2, position.y});
-    topRight.setFillColor(colorTopRight);
-    window.draw(topRight);
+    const Vector2f bottomRight = {
+        position.x + size.x,
+        position.y + size.y};
 
-    RectangleShape bottomLeft({size.x / 2, size.y / 2});
-    bottomLeft.setPosition({position.x, position.y + size.y / 2});
-    bottomLeft.setFillColor(colorBottomLeft);
-    window.draw(bottomLeft);
+    // Erstes Dreieck
+    vertices[0] = Vertex{topLeft, colorTopLeft};
+    vertices[1] = Vertex{topRight, colorTopRight};
+    vertices[2] = Vertex{bottomRight, colorBottomRight};
 
-    RectangleShape bottomRight({size.x / 2, size.y / 2});
-    bottomRight.setPosition({position.x + size.x / 2, position.y + size.y / 2});
-    bottomRight.setFillColor(colorBottomRight);
-    window.draw(bottomRight);
+    // Zweites Dreieck
+    vertices[3] = Vertex{topLeft, colorTopLeft};
+    vertices[4] = Vertex{bottomRight, colorBottomRight};
+    vertices[5] = Vertex{bottomLeft, colorBottomLeft};
+
+    window.draw(vertices);
 }
 
 void UIHelper::drawButton(
@@ -60,36 +53,58 @@ void UIHelper::drawButton(
     Color hoverColor,
     Color pressColor)
 {
-    // Draw shadow
-    drawShadow(window, position, size, 4.f, Color(0, 0, 0, 80));
+    // Dezenter Schatten
+    drawShadow(
+        window,
+        position,
+        size,
+        5.f,
+        Color(0, 0, 0, 65));
 
-    // Determine button color based on state
     Color buttonColor = primaryColor;
+
     if (pressed)
     {
         buttonColor = pressColor;
-        position.y += 2.f; // Pressed effect
+        position.y += 2.f;
     }
     else if (hovered)
     {
         buttonColor = hoverColor;
     }
 
-    // Draw button
     RectangleShape button(size);
+
     button.setPosition(position);
     button.setFillColor(buttonColor);
-    button.setOutlineColor(Color(255, 255, 255, 100));
-    button.setOutlineThickness(1.5f);
-    window.draw(button);
 
-    // Draw glow on hover
-    if (hovered && !pressed)
+    // Dünne Border statt dickem "Game UI"-Outline
+    button.setOutlineThickness(1.f);
+
+    if (hovered)
     {
-        drawGlowEffect(window, position, size, hoverColor, 0.5f);
+        button.setOutlineColor(
+            Color(100, 200, 255, 190));
+    }
+    else
+    {
+        button.setOutlineColor(
+            Color(255, 255, 255, 30));
     }
 
-    // Draw text
+    window.draw(button);
+
+    // Glow nur sehr subtil
+    if (hovered && !pressed)
+    {
+        drawGlowEffect(
+            window,
+            position,
+            size,
+            Color(100, 200, 255),
+            0.35f);
+    }
+
     window.draw(text);
 }
 
@@ -99,20 +114,25 @@ void UIHelper::centerText(
     bool centerX,
     bool centerY)
 {
-    Rect<float> bounds = text.getLocalBounds();
+    const Rect<float> bounds =
+        text.getLocalBounds();
+
+    Vector2f newPosition =
+        text.getPosition();
 
     if (centerX)
     {
-        text.setPosition(Vector2f(
-            position.x - bounds.size.x / 2,
-            text.getPosition().y));
+        newPosition.x =
+            position.x - bounds.position.x - bounds.size.x / 2.f;
     }
+
     if (centerY)
     {
-        text.setPosition(Vector2f(
-            text.getPosition().x,
-            position.y - bounds.size.y / 2));
+        newPosition.y =
+            position.y - bounds.position.y - bounds.size.y / 2.f;
     }
+
+    text.setPosition(newPosition);
 }
 
 void UIHelper::drawShadow(
@@ -123,8 +143,12 @@ void UIHelper::drawShadow(
     Color color)
 {
     RectangleShape shadow(size);
-    shadow.setPosition({position.x + offset, position.y + offset});
+
+    shadow.setPosition({position.x + offset,
+                        position.y + offset});
+
     shadow.setFillColor(color);
+
     window.draw(shadow);
 }
 
@@ -135,15 +159,29 @@ void UIHelper::drawGlowEffect(
     Color glowColor,
     float intensity)
 {
-    for (int i = 0; i < 3; i++)
+    // Nur zwei sehr dezente Glow-Layer
+    for (int i = 0; i < 2; ++i)
     {
-        float expandSize = (3 - i) * 2.f;
-        RectangleShape glow({size.x + expandSize, size.y + expandSize});
-        glow.setPosition({position.x - expandSize / 2, position.y - expandSize / 2});
-        glowColor.a = static_cast<uint8_t>(50 * intensity * (1 - i / 3.f));
+        const float expansion =
+            3.f + static_cast<float>(i) * 3.f;
+
+        RectangleShape glow({size.x + expansion * 2.f,
+                             size.y + expansion * 2.f});
+
+        glow.setPosition({position.x - expansion,
+                          position.y - expansion});
+
         glow.setFillColor(Color::Transparent);
+
+        const float alphaFactor =
+            (i == 0) ? 40.f : 18.f;
+
+        glowColor.a = static_cast<uint8_t>(
+            alphaFactor * intensity);
+
         glow.setOutlineColor(glowColor);
         glow.setOutlineThickness(1.f);
+
         window.draw(glow);
     }
 }
@@ -155,8 +193,14 @@ void UIHelper::drawSeparator(
     float thickness,
     Color color)
 {
-    RectangleShape separator({end.x - start.x, thickness});
+    const float width =
+        end.x - start.x;
+
+    RectangleShape separator({width,
+                              thickness});
+
     separator.setPosition(start);
     separator.setFillColor(color);
+
     window.draw(separator);
 }

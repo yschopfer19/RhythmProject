@@ -3,6 +3,7 @@
 
 #include "MainMenu.h"
 #include "UIHelper.h"
+#include "UITheme.h"
 
 using namespace std;
 using namespace sf;
@@ -17,18 +18,17 @@ MainMenu::MainMenu(RenderWindow &window)
 
     // Title - zentriert oben
     m_titleText = std::make_unique<Text>(m_font, "RhythmProject", 80);
-    m_titleText->setFillColor(sf::Color(100, 200, 255));
-    m_titleText->setOutlineThickness(2.f);
-    m_titleText->setOutlineColor(sf::Color(50, 150, 200));
+    m_titleText->setFillColor(UITheme::Text);
+    m_titleText->setOutlineThickness(0.f);
 
     // Subtitle
     m_subtitleText = std::make_unique<Text>(m_font, "Tap the Beat", 28);
-    m_subtitleText->setFillColor(sf::Color(150, 200, 255));
+    m_subtitleText->setFillColor(UITheme::TextSecondary);
 
     // Play Button - zentriert
     m_playButton.setSize({220.f, 80.f});
     m_playButton.setPosition({(800.f - 220.f) / 2.f, 350.f});
-    m_playButton.setFillColor(sf::Color(70, 130, 180));
+    m_playButton.setFillColor(UITheme::Surface);
 
     m_playText = std::make_unique<Text>(m_font, "PLAY", 40);
     m_playText->setFillColor(sf::Color::White);
@@ -42,21 +42,10 @@ void MainMenu::drawBackground()
         m_window,
         {0.f, 0.f},
         {800.f, 600.f},
-        sf::Color(10, 20, 50),   // Top Left - Dark Blue
-        sf::Color(20, 30, 80),   // Top Right - Darker Blue
-        sf::Color(20, 40, 100),  // Bottom Left - Navy
-        sf::Color(30, 60, 120)); // Bottom Right - Deep Navy
-
-    // Decorative circles/shapes
-    CircleShape circle1(100.f);
-    circle1.setFillColor(sf::Color(70, 130, 180, 50));
-    circle1.setPosition({-50.f, -50.f});
-    m_window.draw(circle1);
-
-    CircleShape circle2(80.f);
-    circle2.setFillColor(sf::Color(100, 160, 220, 40));
-    circle2.setPosition({700.f, 450.f});
-    m_window.draw(circle2);
+        UITheme::BackgroundTop,
+        UITheme::BackgroundTopRight,
+        UITheme::BackgroundBottomLeft,
+        UITheme::BackgroundBottomRight);
 }
 
 void MainMenu::drawTitle()
@@ -85,10 +74,11 @@ void MainMenu::draw()
     Vector2f buttonSize = m_playButton.getSize();
 
     // Bestimme button farbe
-    Color buttonColor = sf::Color(70, 130, 180);
+    Color buttonColor = UITheme::Surface;
+
     if (m_buttonHovered)
     {
-        buttonColor = sf::Color(100, 160, 220);
+        buttonColor = UITheme::SurfaceHover;
     }
 
     // Shadow
@@ -106,19 +96,14 @@ void MainMenu::draw()
     // Glow on hover
     if (m_buttonHovered)
     {
-        for (int i = 0; i < 2; i++)
-        {
-            RectangleShape glow(buttonSize);
-            glow.setPosition(buttonPos);
-            glow.setFillColor(sf::Color::Transparent);
-            glow.setOutlineColor(sf::Color(100, 160, 220, 80 - i * 30));
-            glow.setOutlineThickness(2.f);
-            glow.setScale({1.f + i * 0.1f, 1.f + i * 0.1f});
-            glow.setOrigin({buttonSize.x / 2, buttonSize.y / 2});
-            glow.setPosition({buttonPos.x + buttonSize.x / 2, buttonPos.y + buttonSize.y / 2});
-            m_window.draw(glow);
-        }
+        m_playButton.setOutlineColor(UITheme::Accent);
     }
+    else
+    {
+        m_playButton.setOutlineColor(UITheme::Border);
+    }
+
+    m_playButton.setOutlineThickness(1.f);
 
     // Text zentriert im Button
     Rect<float> textBounds = m_playText->getLocalBounds();

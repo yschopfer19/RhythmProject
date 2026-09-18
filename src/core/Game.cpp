@@ -1,6 +1,7 @@
 #include "Game.h"
 #include "ChartLoader.h"
 #include "UIHelper.h"
+#include "UITheme.h"
 #include <array>
 #include "GameConfig.h"
 #include "MainMenu.h"
@@ -11,10 +12,10 @@ using namespace sf;
 Game::Game()
     : window(sf::VideoMode({800, 600}), "Rhythm Game"),
       mainMenu(window),
-      lanes({Lane(50.0f, 50.0f, 130.0f, 500.0f, Color::Blue, Color::White),
-             Lane(220.0f, 50.0f, 130.0f, 500.0f, Color::Blue, Color::White),
-             Lane(390.0f, 50.0f, 130.0f, 500.0f, Color::Blue, Color::White),
-             Lane(560.0f, 50.0f, 130.0f, 500.0f, Color::Blue, Color::White)})
+      lanes({Lane(80.0f, 50.0f, 130.0f, 500.0f, Color::Blue, Color::White),
+             Lane(250.0f, 50.0f, 130.0f, 500.0f, Color::Blue, Color::White),
+             Lane(420.0f, 50.0f, 130.0f, 500.0f, Color::Blue, Color::White),
+             Lane(590.0f, 50.0f, 130.0f, 500.0f, Color::Blue, Color::White)})
 {
     window.setVerticalSyncEnabled(true);
     window.setKeyRepeatEnabled(false);
@@ -163,7 +164,11 @@ void Game::update()
 
             judgementText->setString(
                 JudgementSystem::judgementToString(Judgement::MISS));
+            judgementText->setFillColor(UITheme::Miss);
+            auto bounds = judgementText->getLocalBounds();
 
+            judgementText->setPosition({400.f - bounds.position.x - bounds.size.x / 2.f,
+                                        400.f});
             judgementTimer = 0.3f;
         }
 
@@ -194,7 +199,30 @@ void Game::update()
                 judgement != Judgement::HOLD &&
                 judgement != Judgement::NONE)
             {
-                judgementText->setString(JudgementSystem::judgementToString(judgement));
+                judgementText->setString(
+                    JudgementSystem::judgementToString(judgement));
+
+                // Farbe abhängig vom Judgement
+                if (judgement == Judgement::PERFECT)
+                {
+                    judgementText->setFillColor(UITheme::Accent);
+                }
+                else if (judgement == Judgement::GOOD)
+                {
+                    judgementText->setFillColor(UITheme::Good);
+                }
+                else if (judgement == Judgement::MISS)
+                {
+                    judgementText->setFillColor(UITheme::Miss);
+                }
+
+                auto bounds = judgementText->getLocalBounds();
+
+                judgementText->setPosition({
+                    400.f - bounds.position.x - bounds.size.x / 2.f,
+                    400.f
+                });
+
                 judgementTimer = 0.3f;
             }
         }
@@ -226,34 +254,42 @@ void Game::render()
             window,
             {0.f, 0.f},
             {800.f, 600.f},
-            Color(15, 25, 50),   // Top Left
-            Color(20, 35, 70),   // Top Right
-            Color(25, 40, 80),   // Bottom Left
-            Color(35, 50, 100)); // Bottom Right
+            UITheme::BackgroundTop,
+            UITheme::BackgroundTopRight,
+            UITheme::BackgroundBottomLeft,
+            UITheme::BackgroundBottomRight);// Bottom Right
 
         // Draw decorative top bar
         RectangleShape topBar({800.f, 40.f});
         topBar.setPosition({0.f, 0.f});
-        topBar.setFillColor(Color(10, 15, 40, 180));
-        topBar.setOutlineColor(Color(100, 150, 200, 150));
-        topBar.setOutlineThickness(2.f);
+        topBar.setFillColor(Color(15, 18, 24, 230));
+        topBar.setOutlineColor(UITheme::Border);
+        topBar.setOutlineThickness(1.f);
         window.draw(topBar);
 
         // Draw HUD on top bar
         scoreText->setString("Score: " + to_string(scoreSystem.getScore()));
         comboText->setString("Combo: " + to_string(scoreSystem.getCombo()));
 
-        scoreText->setPosition({15.f, 8.f});
-        scoreText->setFillColor(Color(100, 200, 255));
-        scoreText->setOutlineThickness(1.f);
-        scoreText->setOutlineColor(Color(50, 100, 150));
         scoreText->setCharacterSize(18);
-
-        comboText->setPosition({650.f, 8.f});
-        comboText->setFillColor(Color(255, 200, 100));
-        comboText->setOutlineThickness(1.f);
-        comboText->setOutlineColor(Color(200, 100, 50));
         comboText->setCharacterSize(18);
+
+        // Score: 15 px vom linken Rand
+        scoreText->setPosition({15.f, 8.f});
+
+        // Combo: 15 px vom rechten Rand
+        auto comboBounds = comboText->getLocalBounds();
+
+        comboText->setPosition({800.f - comboBounds.position.x - comboBounds.size.x - 15.f,
+                                8.f});
+
+        scoreText->setFillColor(UITheme::Text);
+        scoreText->setOutlineThickness(0.f);
+        scoreText->setOutlineColor(Color(50, 100, 150));
+
+        comboText->setFillColor(UITheme::Text);
+        comboText->setOutlineThickness(0.f);
+        comboText->setOutlineColor(Color(200, 100, 50));
 
         window.draw(*scoreText);
         window.draw(*comboText);
@@ -268,7 +304,6 @@ void Game::render()
         // Draw judgement text if not empty
         if (!judgementText->getString().isEmpty())
         {
-            judgementText->setFillColor(Color(100, 200, 255));
             window.draw(*judgementText);
         }
     }
